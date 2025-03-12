@@ -38,7 +38,7 @@ def get_DB():
     connector = mysql.connector.connect(
         host='localhost',
         user='root',
-        database='e-com'
+        database='e-comm'
     )
 
     return connector
@@ -154,8 +154,8 @@ class register(BaseModel):
     c_password: str
 
 
-@app.post('/register.user')
-def register_user(item: register):
+@app.post('/register.user/{role}')
+def register_user(item: register,role: str):
     ticket_res = services.get_ticket(item.password, item.c_password)
     time_now = services.get_date()
 
@@ -164,7 +164,7 @@ def register_user(item: register):
         hash_pw = services.hash(item.password)
         try:
             res = query.post(
-                f"INSERT INTO user (username, email, password,create_date) VALUES ('{item.username}','{item.email}','{hash_pw}','{time_now}')")
+                f"INSERT INTO user (username, email, password,role) VALUES ('{item.username}','{item.email}','{hash_pw}','{role}')")
             res_id = res['lastId']
 
             res2 = query.post(f"INSERT INTO cart (user_id) VALUES ({res_id});")
@@ -225,10 +225,9 @@ class addProducts (BaseModel):
 @app.post('/post.products/')
 def post_products(item: addProducts):
 
-    time = services.get_date()
     try:
         res = query.post(
-            f"INSERT INTO products (products_name,products_desc,products_price,stock_quantity,create_date,category_id) VALUES ('{item.products_name}','{item.products_desc}',{item.products_price},{item.stock_quantity},'{time}',{item.category_id})")
+            f"INSERT INTO products (products_name,products_desc,products_price,stock_quantity,category_id) VALUES ('{item.products_name}','{item.products_desc}',{item.products_price},{item.stock_quantity},{item.category_id})")
         res_id = res['lastId']
 
         res2 = query.post(
