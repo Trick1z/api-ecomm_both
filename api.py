@@ -464,3 +464,47 @@ def post_orders(item: order):
 
     except Exception as err:
         return {'msg': err}
+
+
+@app.get('/get_orders/')
+def get_order_admin():
+    try:
+        res = query.get(f"""
+                        SELECT
+                        order_id,
+                        order_date,
+                        total_amount,
+                        u.username,
+                        s.status_name as status
+                        FROM
+                        orders o
+                        INNER JOIN user u ON o.user_id = u.user_id
+                        INNER JOIN status s ON o.status_id = s.status_id 
+                        """)
+        return res
+        
+    except Exception as e:
+        return e
+    
+class editFrom (BaseModel):
+    id:int
+    name : str
+    desc: str
+    
+    
+@app.put('/edit.put/{table}={id}')
+def edt_cat_sta(table: str , id : int ,data:editFrom):
+    try:
+        res = query.put(f"UPDATE {table} SET {table}_name = '{data.name}' , {table}_desc = '{data.desc}' WHERE {table}_id = {id}")
+        return res
+    except Exception as e:
+        return e
+    
+@app.put('/put_orders_status/{o_id}={statusID}')
+def put_ord_sta(o_id :int , statusID :int ):
+    
+    try:
+        res = query.put(f"UPDATE orders SET status_id = {statusID} WHERE order_id = {o_id}")
+        return res
+    except Exception as e:
+        return e
