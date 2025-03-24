@@ -508,3 +508,21 @@ def put_ord_sta(o_id :int , statusID :int ):
         return res
     except Exception as e:
         return e
+    
+@app.get('/get_order_userID/{id}')
+def get_odr_userID(id:int):
+    try:
+        res = query.get(f"""
+                        SELECT
+                            o.order_date,
+                            o.total_amount,
+                            s.status_name
+                        FROM
+                            orders o
+                            INNER JOIN USER u ON o.user_id = u.user_id
+                            INNER JOIN STATUS s ON o.status_id = s.status_id
+                        WHERE order_id = {id}
+                        """)
+        return res
+    except Exception as e:
+        return e
