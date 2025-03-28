@@ -28,18 +28,18 @@ load_dotenv()
 # get DB
 def get_DB():
     # deploy docker
-    # connector = mysql.connector.connect(
-    #     host='host.docker.internal',
-    #     user='root',
-    #     database='mydb'
-    # )
-
-    # localhost
     connector = mysql.connector.connect(
-        host='localhost',
+        host='host.docker.internal',
         user='root',
         database='e-comm'
     )
+
+    # localhost
+    # connector = mysql.connector.connect(
+    #     host='localhost',
+    #     user='root',
+    #     database='e-comm'
+    # )
 
     return connector
 
@@ -155,7 +155,7 @@ class register(BaseModel):
 
 
 @app.post('/register.user/{role}')
-def register_user(item: register,role: str):
+def register_user(item: register, role: str):
     ticket_res = services.get_ticket(item.password, item.c_password)
     time_now = services.get_date()
 
@@ -432,7 +432,8 @@ def post_orders(item: order):
     status_id = 1
 
     try:
-        res = query.post(f"INSERT INTO orders (user_id, order_date, status_id, total_amount) VALUES ({item.user_id},'{time}',{status_id},{item.amount_total})",)
+        res = query.post(
+            f"INSERT INTO orders (user_id, order_date, status_id, total_amount) VALUES ({item.user_id},'{time}',{status_id},{item.amount_total})",)
 
         res_id = res['lastId']
 
@@ -444,13 +445,15 @@ def post_orders(item: order):
 
         for each in item.products_data:
             cart_id = each['cart_item_id']
-            res_putCart = query.put(f"UPDATE cart_item SET del_frag = 'Y' WHERE cart_item_id = {cart_id}")
+            res_putCart = query.put(
+                f"UPDATE cart_item SET del_frag = 'Y' WHERE cart_item_id = {cart_id}")
 
             p_id = each['products_data']['products_id']
             quantity = each['quantity']
             price = each['products_data']['products_price']
 
-            res_orderItem = query.post(f"INSERT INTO order_item (order_id,products_id,quantity,price) VALUES ({res_id},{p_id},{quantity},{price})")
+            res_orderItem = query.post(
+                f"INSERT INTO order_item (order_id,products_id,quantity,price) VALUES ({res_id},{p_id},{quantity},{price})")
 
             res_cart.append(res_putCart)
             res_order.append(res_orderItem)
@@ -482,46 +485,87 @@ def get_order_admin():
                         INNER JOIN status s ON o.status_id = s.status_id 
                         """)
         return res
-        
+
     except Exception as e:
         return e
-    
+
+
 class editFrom (BaseModel):
-    id:int
-    name : str
+    id: int
+    name: str
     desc: str
-    
-    
+
+
 @app.put('/edit.put/{table}={id}')
-def edt_cat_sta(table: str , id : int ,data:editFrom):
+def edt_cat_sta(table: str, id: int, data: editFrom):
     try:
-        res = query.put(f"UPDATE {table} SET {table}_name = '{data.name}' , {table}_desc = '{data.desc}' WHERE {table}_id = {id}")
+        res = query.put(
+            f"UPDATE {table} SET {table}_name = '{data.name}' , {table}_desc = '{data.desc}' WHERE {table}_id = {id}")
         return res
     except Exception as e:
         return e
-    
+
+
+
+
 @app.put('/put_orders_status/{o_id}={statusID}')
-def put_ord_sta(o_id :int , statusID :int ):
-    
+def put_ord_sta(o_id: int, statusID: int):
+
     try:
-        res = query.put(f"UPDATE orders SET status_id = {statusID} WHERE order_id = {o_id}")
+        res = query.put(
+            f"UPDATE orders SET status_id = {statusID} WHERE order_id = {o_id}")
         return res
     except Exception as e:
         return e
-    
+
+
+
+
 @app.get('/get_order_userID/{id}')
-def get_odr_userID(id:int):
+def get_odr_userID(id: int):
     try:
         res = query.get(f"""
                         SELECT
                             o.order_date,
+                            o.order_id,
                             o.total_amount,
                             s.status_name
+                           
                         FROM
                             orders o
                             INNER JOIN USER u ON o.user_id = u.user_id
                             INNER JOIN STATUS s ON o.status_id = s.status_id
-                        WHERE order_id = {id}
+                        WHERE o.user_id = {id}
+                        """)
+        return res
+    except Exception as e:
+        return e
+
+# @app.put('/cancel.user.order')
+# def cancel_order():
+#     try:
+#         res = query.put(f"UPDATE orders SET")
+#         return
+#     except Exception as e:
+#         return e
+
+
+@app.get('/orders.item/ref={id}')
+def get_ord_item(id: int):
+    try:
+        res = query.get(f"""
+                        SELECT
+                            p.products_name,
+                            p.products_desc,
+                            o.quantity,
+                            o.price ,
+                            i.img_url
+                        FROM
+                            order_item o
+                        INNER JOIN products p ON o.products_id = p.products_id
+                        INNER JOIN img i ON o.products_id = i.img_id 
+                        WHERE
+                            o.order_id = {id}
                         """)
         return res
     except Exception as e:
